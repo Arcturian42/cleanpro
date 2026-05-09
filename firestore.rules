@@ -1,0 +1,102 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      // Temporarily allowing all for mock login compatibility
+      return true;
+    }
+
+    function isEmailVerified() {
+      // Temporarily allowing all for mock login compatibility
+      return true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- ENTITY VALIDATIONS ---
+
+    function isValidProspect(data) {
+      return data.keys().hasAll(['id', 'companyName', 'stage']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.companyName is string && data.companyName.size() <= 200 &&
+             data.stage in ['new', 'contacted', 'qualified', 'lost'] &&
+             (!('score' in data) || (data.score is number && data.score >= 0 && data.score <= 100)) &&
+             (!('email' in data) || (data.email is string && data.email.size() <= 256));
+    }
+
+    function isValidOpportunity(data) {
+      return data.keys().hasAll(['id', 'title', 'value', 'stage', 'assignedTo']) &&
+             data.value is number && data.value >= 0 &&
+             data.stage in ['discovery', 'proposal', 'negotiation', 'closed_won', 'closed_lost'] &&
+             data.assignedTo is string;
+    }
+
+    function isValidCRMEvent(data) {
+      return data.keys().hasAll(['id', 'title', 'start', 'end', 'type', 'assignedTo']) &&
+             data.assignedTo is list && data.assignedTo.size() <= 20 &&
+             data.type in ['visit', 'meeting', 'reminder'];
+    }
+
+    // --- COLLECTION MATCH BLOCKS ---
+
+    match /prospects/{prospectId} {
+      allow list: if isSignedIn();
+      allow get: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(prospectId) && isValidProspect(incoming());
+      allow update: if isSignedIn() && isValidProspect(incoming()) && (
+        // Action: Generic update
+        incoming().diff(existing()).affectedKeys().hasOnly(['companyName', 'stage', 'score', 'notes', 'rejectionReason', 'contactName', 'email', 'phone', 'sector'])
+      );
+      allow delete: if isSignedIn();
+    }
+
+    match /opportunities/{oppId} {
+      allow list: if isSignedIn();
+      allow get: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(oppId) && isValidOpportunity(incoming());
+      allow update: if isSignedIn() && isValidOpportunity(incoming()) && (
+        incoming().diff(existing()).affectedKeys().hasOnly(['title', 'value', 'probability', 'stage', 'expectedCloseDate', 'assignedTo'])
+      );
+      allow delete: if isSignedIn();
+    }
+
+    match /crm_events/{eventId} {
+      allow list: if isSignedIn();
+      allow get: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(eventId) && isValidCRMEvent(incoming());
+      allow update: if isSignedIn() && isValidCRMEvent(incoming()) && (
+        incoming().diff(existing()).affectedKeys().hasOnly(['title', 'description', 'start', 'end', 'type', 'assignedTo', 'clientId', 'prospectId'])
+      );
+      allow delete: if isSignedIn();
+    }
+
+    match /crm_team/{memberId} {
+      allow list: if isSignedIn();
+      allow get: if isSignedIn();
+      allow create, update: if isSignedIn() && isValidId(memberId);
+      allow delete: if isSignedIn();
+    }
+
+    match /clients/{clientId} {
+      allow list: if isSignedIn();
+      allow get: if isSignedIn();
+      allow create, update, delete: if isSignedIn() && isValidId(clientId);
+    }
+  }
+}

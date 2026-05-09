@@ -1,0 +1,95 @@
+{
+  "entities": {
+    "Client": {
+      "title": "Client",
+      "description": "A B2B client entity",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["syndic", "entreprise", "hôtel", "clinique", "école", "parking", "commerce", "particulier"] },
+        "contactName": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "address": { "type": "string" },
+        "siret": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "pending", "late", "inactive"] },
+        "monthlyRevenue": { "type": "number" }
+      },
+      "required": ["id", "name", "type", "email", "status"]
+    },
+    "Prospect": {
+      "title": "Prospect",
+      "description": "A lead or potential client",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "companyName": { "type": "string" },
+        "sector": { "type": "string" },
+        "contactName": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "score": { "type": "number" },
+        "stage": { "type": "string", "enum": ["new", "contacted", "qualified", "lost"] },
+        "rejectionReason": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "notes": { "type": "string" },
+        "suggestedByAI": { "type": "boolean" }
+      },
+      "required": ["id", "companyName", "stage"]
+    },
+    "Opportunity": {
+      "title": "Opportunity",
+      "description": "A sales lead in the pipeline",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "clientId": { "type": "string" },
+        "prospectId": { "type": "string" },
+        "value": { "type": "number" },
+        "probability": { "type": "number" },
+        "stage": { "type": "string", "enum": ["discovery", "proposal", "negotiation", "closed_won", "closed_lost"] },
+        "expectedCloseDate": { "type": "string", "format": "date" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "assignedTo": { "type": "string" }
+      },
+      "required": ["id", "title", "value", "stage", "assignedTo"]
+    },
+    "CRMEvent": {
+      "title": "CRM Event",
+      "description": "An event in the CRM calendar",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "start": { "type": "string", "format": "date-time" },
+        "end": { "type": "string", "format": "date-time" },
+        "type": { "type": "string", "enum": ["visit", "meeting", "reminder"] },
+        "clientId": { "type": "string" },
+        "prospectId": { "type": "string" },
+        "assignedTo": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["id", "title", "start", "end", "type", "assignedTo"]
+    }
+  },
+  "firestore": {
+    "clients": {
+      "schema": "Client",
+      "description": "List of all signed clients"
+    },
+    "prospects": {
+      "schema": "Prospect",
+      "description": "Pool of prospects for AI sourcing"
+    },
+    "opportunities": {
+      "schema": "Opportunity",
+      "description": "Sales pipeline opportunities"
+    },
+    "crm_events": {
+      "schema": "CRMEvent",
+      "description": "Calendar events for sales visits and meetings"
+    }
+  }
+}

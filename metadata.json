@@ -1,0 +1,9 @@
+{
+  "name": "CleanPro",
+  "description": "Logiciel de gestion et CRM complet pour entreprises de propreté haut de gamme.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ],
+  "majorCapabilities": []
+}
